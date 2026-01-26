@@ -242,3 +242,5 @@ if (typeof require !== 'undefined' && require.main === module) {
 
   console.log(JSON.stringify(vendorResult, null, 2));
 }
+
+module.exports = PriceEstimator;

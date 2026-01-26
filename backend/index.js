@@ -4,6 +4,11 @@ const { Server } = require("socket.io");
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const dotenv = require('dotenv');
+const path = require('path');
+
+// Import AI modules
+const PriceEstimator = require('../ai/price/priceEstimator.js');
+const SimpleTranslationService = require('./services/SimpleTranslationService.js');
 
 dotenv.config();
 
@@ -56,6 +61,10 @@ const db = new sqlite3.Database('./database.sqlite', (err) => {
         )`);
   }
 });
+
+// Initialize AI services
+const priceEstimator = new PriceEstimator();
+const translationService = new SimpleTranslationService();
 
 const { translateText } = require('./services/translator');
 const { getMandiRates } = require('./services/priceEngine');
@@ -166,9 +175,57 @@ app.post('/api/auth/login', (req, res) => {
   );
 });
 
-// Price Route
+// Price Route - Enhanced with AI price estimation
 app.get('/api/prices', (req, res) => {
     res.json(getMandiRates());
+});
+
+// AI Price Estimation Route
+app.post('/api/prices/estimate', async (req, res) => {
+    try {
+        const { prices, method = 'median' } = req.body;
+        
+        if (!prices || !Array.isArray(prices)) {
+            return res.status(400).json({ error: 'Prices array is required' });
+        }
+
+        const fairPrice = priceEstimator.calculateFairPrice(prices, method);
+        
+        res.json({
+            success: true,
+            fairPrice,
+            method,
+            sampleSize: prices.length
+        });
+    } catch (error) {
+        console.error('Price estimation error:', error);
+        res.status(500).json({ error: 'Price estimation failed' });
+    }
+});
+
+// AI Translation Route
+app.post('/api/translate', async (req, res) => {
+    try {
+        const { text, sourceLang = 'auto', targetLang } = req.body;
+        
+        if (!text || !targetLang) {
+            return res.status(400).json({ error: 'Text and target language are required' });
+        }
+
+        const result = await translationService.translate(text, sourceLang, targetLang);
+        
+        res.json({
+            success: true,
+            original: text,
+            translated: result.text || result,
+            sourceLang: result.sourceLang || sourceLang,
+            targetLang,
+            confidence: result.confidence || null
+        });
+    } catch (error) {
+        console.error('Translation error:', error);
+        res.status(500).json({ error: 'Translation failed' });
+    }
 });
 
 // Socket.io Logic
@@ -181,21 +238,39 @@ io.on('connection', (socket) => {
   });
 
   socket.on('send_message', async (data) => {
-    // data = { roomId, senderId, text, targetLang }
-    
-    // 1. Translate
-    const translatedText = await translateText(data.text, data.targetLang);
-    
-    // 2. Broadcast
-    const msgPayload = {
-        ...data,
-        translated_text: translatedText,
-        timestamp: new Date().toISOString()
-    };
-    
-    io.to(data.roomId).emit('receive_message', msgPayload);
-    
-    // TODO: Store in DB
+    try {
+        // data = { roomId, senderId, text, targetLang }
+        
+        // 1. Translate using AI service
+        const translatedText = await translationService.translate(
+            data.text, 
+            'auto', // Auto-detect source language
+            data.targetLang
+        );
+        
+        // 2. Broadcast
+        const msgPayload = {
+            ...data,
+            translated_text: translatedText.text || translatedText,
+            confidence: translatedText.confidence || null,
+            timestamp: new Date().toISOString()
+        };
+        
+        io.to(data.roomId).emit('receive_message', msgPayload);
+        
+        // TODO: Store in DB
+    } catch (error) {
+        console.error('Translation error:', error);
+        // Send original message if translation fails
+        const msgPayload = {
+            ...data,
+            translated_text: data.text,
+            error: 'Translation failed',
+            timestamp: new Date().toISOString()
+        };
+        io.to(data.roomId).emit('receive_message', msgPayload);
+    }
+  });
   });
 
   socket.on('disconnect', () => {
