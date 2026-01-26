@@ -271,7 +271,6 @@ io.on('connection', (socket) => {
         io.to(data.roomId).emit('receive_message', msgPayload);
     }
   });
-  });
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
