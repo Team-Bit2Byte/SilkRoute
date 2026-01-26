@@ -279,10 +279,20 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
-// Start server
+// Start server with error handling
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Backend API: http://localhost:${PORT}`);
+}).on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`Port ${PORT} is busy, trying port ${PORT + 1}`);
+    server.listen(PORT + 1, () => {
+      console.log(`Server is running on port ${PORT + 1}`);
+      console.log(`Backend API: http://localhost:${PORT + 1}`);
+    });
+  } else {
+    console.error('Server error:', err);
+  }
 });

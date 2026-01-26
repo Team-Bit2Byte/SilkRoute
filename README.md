@@ -811,7 +811,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 <div align="center">
 
-**Made with ❤️ for Indian Farmers**
+**Made with ❤️ for Indian**
 
 [⬆ Back to Top](#-silkroute)
 
