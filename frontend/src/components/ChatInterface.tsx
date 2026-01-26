@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useSocket } from '@/hooks/useSocket';
-import { Send, Languages } from 'lucide-react';
+import { Send, Languages, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export default function ChatInterface() {
   const [input, setInput] = useState('');
@@ -18,16 +19,21 @@ export default function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto bg-background border-x-2 border-border-lavender">
+    <div className="flex flex-col h-screen w-full max-w-4xl mx-auto bg-background border-x-0 sm:border-x-2 border-border-lavender">
       {/* Header */}
-      <header className="bg-accent-purple text-background p-4 flex justify-between items-center shadow-md">
-        <h1 className="font-bold text-lg">SilkRoute Chat</h1>
+      <header className="bg-accent-purple text-background p-3 sm:p-4 flex justify-between items-center shadow-md">
+        <div className="flex items-center gap-3">
+          <Link href="/" className="sm:hidden">
+            <ArrowLeft size={20} />
+          </Link>
+          <h1 className="font-bold text-lg sm:text-xl">SilkRoute Chat</h1>
+        </div>
         <div className="flex items-center gap-2">
-          <Languages size={20} />
+          <Languages size={18} className="hidden sm:block" />
           <select 
             value={language} 
             onChange={(e) => setLanguage(e.target.value)}
-            className="bg-background/20 text-background border-none rounded-lg p-1 text-sm outline-none font-medium"
+            className="bg-background/20 text-background border-none rounded-lg p-1 text-xs sm:text-sm outline-none font-medium"
           >
             <option value="en">English</option>
             <option value="hi">Hindi</option>
@@ -38,23 +44,26 @@ export default function ChatInterface() {
       </header>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
+        {messages.length === 0 && (
+          <div className="text-center text-gray-500 mt-8">
+            <p className="text-sm sm:text-base">Start a conversation to negotiate prices!</p>
+          </div>
+        )}
         {messages.map((msg, idx) => {
           const isMe = msg.senderId === undefined; // TODO: Fix ID check with socket.id
-          // Ideally check against current socket.id but simplified for now
-          // We'll rely on server echo for now so everyone receives it
           
           return (
             <div 
               key={idx} 
-              className={`p-3 rounded-2xl max-w-[80%] shadow-sm ${
+              className={`p-3 rounded-2xl max-w-[85%] sm:max-w-[80%] shadow-sm ${
                 'bg-background border-2 border-border-lavender self-start'
               }`}
             >
               <div className="text-xs text-primary-text font-medium mb-1">{msg.username}</div>
-              <div className="text-foreground">{msg.text}</div>
+              <div className="text-sm sm:text-base text-foreground break-words">{msg.text}</div>
               {msg.translated_text && (
-                 <div className="text-sm text-success-text mt-1 pt-1 border-t border-border-lavender italic">
+                 <div className="text-xs sm:text-sm text-success-text mt-2 pt-2 border-t border-border-lavender italic">
                    {msg.translated_text}
                  </div>
               )}
@@ -64,20 +73,21 @@ export default function ChatInterface() {
       </div>
 
       {/* Input */}
-      <div className="p-3 bg-background border-t-2 border-border-lavender flex gap-2 items-center">
+      <div className="p-3 sm:p-4 bg-background border-t-2 border-border-lavender flex gap-2 items-end">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your offer..."
-          className="flex-1 p-2 border-2 border-border-lavender bg-background text-foreground rounded-full focus:outline-none focus:ring-2 focus:ring-accent-purple"
-          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+          className="flex-1 p-2 sm:p-3 border-2 border-border-lavender bg-background text-foreground rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent-purple text-sm sm:text-base resize-none"
+          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
         />
         <button 
           onClick={handleSend}
-          className="bg-accent-purple text-background p-2 rounded-full hover:bg-accent-purple-hover transition shadow-md"
+          disabled={!input.trim()}
+          className="bg-accent-purple text-background p-2 sm:p-3 rounded-2xl hover:bg-accent-purple-hover transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
         >
-          <Send size={20} />
+          <Send size={18} />
         </button>
       </div>
     </div>

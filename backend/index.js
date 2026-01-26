@@ -28,8 +28,11 @@ const db = new sqlite3.Database('./database.sqlite', (err) => {
     // Initialize tables
     db.run(`CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
-            username TEXT,
-            language TEXT,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            user_type TEXT NOT NULL,
+            language TEXT DEFAULT 'en',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
     
@@ -62,6 +65,59 @@ const { getMandiRates } = require('./services/priceEngine');
 // Basic Route
 app.get('/', (req, res) => {
   res.send('SilkRoute Backend is Running');
+});
+
+// Auth Routes
+app.post('/api/auth/register', (req, res) => {
+  const { name, email, password, userType } = req.body;
+  
+  if (!name || !email || !password || !userType) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+
+  const userId = require('uuid').v4();
+  
+  db.run(
+    'INSERT INTO users (id, name, email, password, user_type) VALUES (?, ?, ?, ?, ?)',
+    [userId, name, email, password, userType], // Note: In production, hash the password
+    function(err) {
+      if (err) {
+        if (err.message.includes('UNIQUE constraint failed')) {
+          return res.status(400).json({ error: 'Email already exists' });
+        }
+        return res.status(500).json({ error: 'Registration failed' });
+      }
+      res.json({ 
+        success: true, 
+        user: { id: userId, name, email, userType }
+      });
+    }
+  );
+});
+
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
+  db.get(
+    'SELECT id, name, email, user_type FROM users WHERE email = ? AND password = ?',
+    [email, password], // Note: In production, compare hashed passwords
+    (err, user) => {
+      if (err) {
+        return res.status(500).json({ error: 'Login failed' });
+      }
+      if (!user) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+      res.json({ 
+        success: true, 
+        user: { id: user.id, name: user.name, email: user.email, userType: user.user_type }
+      });
+    }
+  );
 });
 
 // Price Route
