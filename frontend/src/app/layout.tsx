@@ -1,0 +1,38 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import Navbar from "@/components/layout/Navbar";
+import { AuthProvider } from "@/contexts/AuthContext";
+import NextAuthProvider from "@/components/NextAuthProvider";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "SilkRoute - Multilingual Marketplace",
+  description: "Connect, Negotiate, and Trade in your language.",
+  viewport: "width=device-width, initial-scale=1",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
+      <body className={inter.className} suppressHydrationWarning>
+        <NextAuthProvider>
+          <AuthProvider>
+            <Navbar />
+            <div className="min-h-screen">
+              {children}
+            </div>
+          </AuthProvider>
+        </NextAuthProvider>
+      </body>
+    </html>
+  );
+}
