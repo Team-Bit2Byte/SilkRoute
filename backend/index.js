@@ -84,13 +84,15 @@ app.post('/api/auth/register', (req, res) => {
     return res.status(400).json({ error: 'All fields are required' });
   }
 
-  const userId = require('uuid').v4();
+  const { v4: uuidv4 } = require('uuid');
+  const userId = uuidv4();
   
   db.run(
     'INSERT INTO users (id, name, email, password, user_type) VALUES (?, ?, ?, ?, ?)',
     [userId, name, email, password, userType], // Note: In production, hash the password
     function(err) {
       if (err) {
+        console.error('Registration error:', err);
         if (err.message.includes('UNIQUE constraint failed')) {
           return res.status(400).json({ error: 'Email already exists' });
         }
