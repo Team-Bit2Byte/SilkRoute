@@ -95,6 +95,52 @@ app.post('/api/auth/register', (req, res) => {
   );
 });
 
+// OAuth endpoint (Google/Apple login)
+app.post('/api/auth/oauth', (req, res) => {
+  const { email, name, provider, providerId, userType } = req.body;
+  
+  if (!email || !name || !provider) {
+    return res.status(400).json({ error: 'Email, name, and provider are required' });
+  }
+
+  // Check if user already exists
+  db.get(
+    'SELECT id, name, email, user_type FROM users WHERE email = ?',
+    [email],
+    (err, user) => {
+      if (err) {
+        return res.status(500).json({ error: 'Database error' });
+      }
+      
+      if (user) {
+        // User exists, return their info
+        return res.json({ 
+          success: true, 
+          user: { id: user.id, name: user.name, email: user.email, userType: user.user_type }
+        });
+      }
+      
+      // Create new user with OAuth
+      const userId = require('uuid').v4();
+      const defaultUserType = userType || 'buyer'; // Default to buyer for OAuth users
+      
+      db.run(
+        'INSERT INTO users (id, name, email, password, user_type) VALUES (?, ?, ?, ?, ?)',
+        [userId, name, email, `oauth_${provider}_${providerId}`, defaultUserType],
+        function(insertErr) {
+          if (insertErr) {
+            return res.status(500).json({ error: 'Failed to create user' });
+          }
+          res.json({ 
+            success: true, 
+            user: { id: userId, name, email, userType: defaultUserType }
+          });
+        }
+      );
+    }
+  );
+});
+
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body;
   
