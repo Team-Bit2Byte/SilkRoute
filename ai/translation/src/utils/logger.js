@@ -194,6 +194,24 @@ function logHealthCheck(healthStatus) {
   });
 }
 
+/**
+ * Log confidence calculation
+ * @param {Object} translationData - Translation data used for calculation
+ * @param {number} confidenceScore - Calculated confidence score
+ * @param {string} notes - Additional notes about the calculation
+ */
+function logConfidenceCalculation(translationData, confidenceScore, notes) {
+  logger.debug('Confidence calculation', {
+    originalLength: translationData.originalText?.length || 0,
+    translatedLength: translationData.translatedText?.length || 0,
+    sourceLang: translationData.sourceLang,
+    targetLang: translationData.targetLang,
+    confidenceScore,
+    notes,
+    type: 'confidence_calculation'
+  });
+}
+
 // Create logs directory if it doesn't exist
 const fs = require('fs');
 const logsDir = path.join(__dirname, '../../logs');
@@ -210,5 +228,6 @@ module.exports = {
   logCacheOperation,
   logProviderStatus,
   logPerformanceMetrics,
-  logHealthCheck
+  logHealthCheck,
+  logConfidenceCalculation
 };

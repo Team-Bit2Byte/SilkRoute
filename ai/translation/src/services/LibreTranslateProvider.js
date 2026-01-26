@@ -7,7 +7,7 @@ const axios = require('axios');
 const TranslationProvider = require('../interfaces/TranslationProvider');
 const { getProviderConfig, getTimeout, calculateBackoffDelay } = require('../config/providers');
 const { getSupportedLanguageCodes } = require('../config/languages');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 
 class LibreTranslateProvider extends TranslationProvider {
   constructor(apiKey = null) {
