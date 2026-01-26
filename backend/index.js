@@ -277,26 +277,10 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = 5000;
 
-// Function to find available port
-const findAvailablePort = (startPort) => {
-  return new Promise((resolve) => {
-    const testServer = require('net').createServer();
-    testServer.listen(startPort, () => {
-      const port = testServer.address().port;
-      testServer.close(() => resolve(port));
-    });
-    testServer.on('error', () => {
-      resolve(findAvailablePort(startPort + 1));
-    });
-  });
-};
-
-// Start server on available port
-findAvailablePort(PORT).then(availablePort => {
-  server.listen(availablePort, () => {
-    console.log(`Server is running on port ${availablePort}`);
-    console.log(`Backend API: http://localhost:${availablePort}`);
-  });
+// Start server
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+  console.log(`Backend API: http://localhost:${PORT}`);
 });

@@ -31,7 +31,18 @@ const authOptions = {
             })
           })
 
-          const data = await res.json()
+          if (!res.ok) {
+            console.error('Backend API error:', res.status, res.statusText)
+            return null
+          }
+
+          const text = await res.text()
+          if (!text) {
+            console.error('Empty response from backend')
+            return null
+          }
+
+          const data = JSON.parse(text)
 
           if (data.success && data.user) {
             return {
@@ -71,10 +82,16 @@ const authOptions = {
                 userType: 'buyer' // Default for OAuth users
               })
             })
-            const data = await res.json()
-            if (data.user) {
-              token.id = data.user.id
-              token.userType = data.user.userType
+            
+            if (res.ok) {
+              const text = await res.text()
+              if (text) {
+                const data = JSON.parse(text)
+                if (data.user) {
+                  token.id = data.user.id
+                  token.userType = data.user.userType
+                }
+              }
             }
           } catch (error) {
             console.error('OAuth backend registration error:', error)
