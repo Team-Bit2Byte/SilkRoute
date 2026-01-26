@@ -1,0 +1,13 @@
+commodity,quality,arrival_month,price
+tomato,good,1,28
+tomato,good,2,30
+tomato,average,1,24
+tomato,average,2,26
+onion,good,1,22
+onion,good,2,25
+onion,average,1,18
+onion,average,2,20
+potato,good,1,20
+potato,good,2,22
+potato,average,1,16
+potato,average,2,18
